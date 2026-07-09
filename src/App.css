@@ -1,0 +1,59 @@
+/* Container pembungkus utama toggle */
+.toggle-container {
+  background-color: #f3f4f6;
+  padding: 4px;
+  position: relative; /* Jadi patokan koordinat si balok geser */
+  display: flex;
+  border-radius: 8px;
+}
+
+/* BALOK INDIKATOR UTAMA YANG BERGESER */
+.toggle-sliding-bg {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: calc(50% - 4px); /* Lebarnya pas setengah container */
+  background-color: #063020;
+  border-radius: 6px;
+  /* Animasi geser super smooth pake cubic-bezier */
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+/* Logic posisi geser berdasarkan state */
+.slide-customer {
+  transform: translateX(0);
+}
+.slide-producer {
+  transform: translateX(100%);
+}
+
+/* TOMBOL TEKS (Transparan, cuma buat nerima klik & ganti warna font) */
+.toggle-button-custom {
+  background: transparent;
+  border: none;
+  width: 50%;
+  padding: 8px 0;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  position: relative;
+  z-index: 2; /* Harus di atas balok biar bisa di-klik */
+  transition: color 0.3s ease;
+}
+
+.toggle-button-custom.active {
+  color: #ffffff !important;
+}
+
+.toggle-button-custom.inactive {
+  color: #6c757d;
+}
+
+.toggle-button-custom.inactive:hover {
+  color: #063020;
+}
