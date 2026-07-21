@@ -1,6 +1,6 @@
 import React from 'react';
 
-function Register({ setPage, regRole, setRegRole, handleRegister, kebunImg }) {
+function Register({ setPage, handleRegister, kebunImg }) {
   return (
     <div className="container-fluid vh-100 p-0 m-0 overflow-hidden" style={{ backgroundColor: '#fdfdfd' }}>
       <div className="row h-100 g-0">
@@ -25,14 +25,15 @@ function Register({ setPage, regRole, setRegRole, handleRegister, kebunImg }) {
             <h2 className="fw-bold mb-2 text-dark" style={{ fontSize: '2.2rem', letterSpacing: '-0.5px' }}>Create an account</h2>
             <p className="text-muted mb-4 small">Register now to start choosing fresh products or selling your harvest.</p>
 
-            {/* Toggle Tab Register */}
-            <div className="mb-4 toggle-container">
-              <div className={`toggle-sliding-bg ${regRole === 'customer' ? 'slide-customer' : 'slide-producer'}`}></div>
-              <button type="button" className={`toggle-button-custom ${regRole === 'customer' ? 'active' : 'inactive'}`} onClick={() => setRegRole('customer')}>Customer</button>
-              <button type="button" className={`toggle-button-custom ${regRole === 'producer' ? 'active' : 'inactive'}`} onClick={() => setRegRole('producer')}>Producer</button>
-            </div>
-
             <form onSubmit={handleRegister}>
+              <div className="mb-4">
+                <label className="form-label text-uppercase fw-bold text-dark" style={{ fontSize: '0.7rem' }}>Full Name</label>
+                <div className="input-group">
+                  <span className="input-group-text bg-white border-end-0 text-secondary opacity-75"><i className="bi bi-person"></i></span>
+                  <input type="text" name="regName" className="form-control border-start-0 py-2-5" placeholder="Enter your full name" required />
+                </div>
+              </div>
+
               <div className="mb-4">
                 <label className="form-label text-uppercase fw-bold text-dark" style={{ fontSize: '0.7rem' }}>Email Address</label>
                 <div className="input-group">
@@ -46,6 +47,14 @@ function Register({ setPage, regRole, setRegRole, handleRegister, kebunImg }) {
                 <div className="input-group">
                   <span className="input-group-text bg-white border-end-0 text-secondary opacity-75"><i className="bi bi-lock"></i></span>
                   <input type="password" name="regPassword" className="form-control border-start-0 py-2-5" placeholder="Create complex password" required />
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="form-label text-uppercase fw-bold text-dark" style={{ fontSize: '0.7rem' }}>Confirm Password</label>
+                <div className="input-group">
+                  <span className="input-group-text bg-white border-end-0 text-secondary opacity-75"><i className="bi bi-lock-fill"></i></span>
+                  <input type="password" name="regConfirmPassword" className="form-control border-start-0 py-2-5" placeholder="Re-enter password" required />
                 </div>
               </div>
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function Login({ setPage, role, setRole, handleSignIn, kebunImg }) {
+function Login({ setPage, handleSignIn, kebunImg }) {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
@@ -22,17 +22,24 @@ function Login({ setPage, role, setRole, handleSignIn, kebunImg }) {
         </div>
 
         {/* Sisi Kanan: Form */}
-        <div className="col-md-6 d-flex flex-column justify-content-center align-items-center bg-white px-4 px-md-5">
+        <div className="col-md-6 d-flex flex-column justify-content-center align-items-center bg-white px-4 px-md-5 position-relative">
+          
+          {/* ↩️ TOMBOL BACK TO LANDING PAGE */}
+          <div className="position-absolute top-0 start-0 m-4 ms-md-5">
+            <button 
+              onClick={() => setPage('landing')} 
+              className="btn d-flex align-items-center gap-2 p-0 text-muted fw-semibold border-0 bg-transparent shadow-none"
+              style={{ fontSize: '0.95rem', transition: '0.2s' }}
+              onMouseEnter={(e) => e.target.style.color = '#063020'}
+              onMouseLeave={(e) => e.target.style.color = '#6c757d'}
+            >
+              <i className="bi bi-arrow-left"></i> Back to Home
+            </button>
+          </div>
+
           <div className="w-100" style={{ maxWidth: '440px' }}>
             <h2 className="fw-bold mb-2 text-dark" style={{ fontSize: '2.2rem', letterSpacing: '-0.5px' }}>Sign in to your account</h2>
             <p className="text-muted mb-4 small">Access your dashboard to manage harvests and orders.</p>
-
-            {/* Toggle Tab Login */}
-            <div className="mb-4 toggle-container">
-              <div className={`toggle-sliding-bg ${role === 'customer' ? 'slide-customer' : 'slide-producer'}`}></div>
-              <button type="button" className={`toggle-button-custom ${role === 'customer' ? 'active' : 'inactive'}`} onClick={() => setRole('customer')}>Customer</button>
-              <button type="button" className={`toggle-button-custom ${role === 'producer' ? 'active' : 'inactive'}`} onClick={() => setRole('producer')}>Producer</button>
-            </div>
 
             <form onSubmit={handleSignIn}>
               <div className="mb-4">
@@ -46,7 +53,6 @@ function Login({ setPage, role, setRole, handleSignIn, kebunImg }) {
               <div className="mb-4">
                 <div className="d-flex justify-content-between align-items-center mb-1">
                   <label className="form-label text-uppercase fw-bold text-dark m-0" style={{ fontSize: '0.7rem' }}>Password</label>
-                  <a href="#" className="text-decoration-none fw-semibold" style={{ color: '#b45309', fontSize: '0.75rem' }}>Forgot password?</a>
                 </div>
                 <div className="input-group">
                   <span className="input-group-text bg-white border-end-0 text-secondary opacity-75"><i className="bi bi-lock"></i></span>
