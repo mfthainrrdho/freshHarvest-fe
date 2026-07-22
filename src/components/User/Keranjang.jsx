@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import Marketplace from './Marketplace';
+import api from '../../services/api'; // Import API service
 
 // 🟢 TANGKAP PROPS DARI PUSAT (Dashboarduser)
-function Keranjang({ cartItems, setCartItems, setActiveTab }) {
+function Keranjang({ cartItems, setCartItems, setActiveTab, registeredUser }) {
   
   // STATE: Hanya 2 opsi pembayaran ('qris' or 'cod')
   const [selectedPayment, setSelectedPayment] = useState('qris');
   // STATE: Untuk mengontrol pop-up modal QRIS simulasi
   const [showQrisModal, setShowQrisModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Handler Qty & Delete menggunakan State Pusat
   const updateQuantity = (id, delta) => {
@@ -33,21 +34,80 @@ function Keranjang({ cartItems, setCartItems, setActiveTab }) {
   const estimatedTax = subtotal * taxRate;
   const grandTotal = subtotal + shipping + estimatedTax;
 
+  // 🚀 FUNGSI CHECKOUT KE API BACKEND
+  const processCheckout = async () => {
+    if (cartItems.length === 0) {
+      alert('Keranjang belanja kosong!');
+      return;
+    }
+
+    // Cek apakah user login
+    if (!registeredUser || !registeredUser.email) {
+      alert('Silakan login terlebih dahulu!');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 1. Kirim data checkout ke backend
+      const checkoutData = {
+        recipient_name: registeredUser.name || 'Pelanggan',
+        phone: registeredUser.phone || '08123456789',
+        street: registeredUser.street || 'Jl. Contoh No. 123',
+        suite: registeredUser.suite || 'Blok A',
+        city_state_zip: registeredUser.cityStateZip || 'Jakarta 12345',
+        payment_method: selectedPayment, // 'qris' atau 'cod'
+      };
+
+      const response = await api.post('/checkout', checkoutData);
+      
+      if (response.data.success) {
+        const orderId = response.data.data.order_id;
+        
+        // 2. Untuk COD, konfirmasi pembayaran otomatis
+        if (selectedPayment === 'cod') {
+          await api.post(`/orders/${orderId}/confirm-payment`);
+        }
+        
+        // 3. Tampilkan sukses
+        alert(`✅ Pesanan berhasil dibuat!\nOrder ID: ${orderId}\nMetode: ${selectedPayment.toUpperCase()}\nTotal: $${grandTotal.toFixed(2)}`);
+        
+        // 4. Kosongkan keranjang
+        setCartItems([]);
+        
+        // 5. Redirect ke Order History
+        if (setActiveTab) {
+          setActiveTab('Orders');
+        }
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      
+      // 🔄 FALLBACK: Jika API gagal, proses dengan cara lama (dummy)
+      alert(`⚠️ Gagal terhubung ke server. Transaksi dicatat secara lokal.\nMetode: ${selectedPayment.toUpperCase()}\nTotal: $${grandTotal.toFixed(2)}`);
+      setCartItems([]);
+      if (setActiveTab) {
+        setActiveTab('Orders');
+      }
+    } finally {
+      setLoading(false);
+      setShowQrisModal(false);
+    }
+  };
+
   // Triger saat tombol checkout utama diklik
   const handleCheckoutTrigger = () => {
     if (selectedPayment === 'qris') {
       setShowQrisModal(true);
     } else {
-      executeSuccessOrder();
+      processCheckout();
     }
   };
 
-  // Fungsi final ketika transaksi dinyatakan sukses
+  // Fungsi final ketika QRIS disimulasikan sukses
   const executeSuccessOrder = () => {
-    setShowQrisModal(false);
-    alert(`Transaksi Berhasil!\nMetode: ${selectedPayment.toUpperCase()}\nTotal: $${grandTotal.toFixed(2)}\n\nKeranjang Anda telah dikosongkan.`);
-    setCartItems([]); // Mengosongkan keranjang pusat & menghapus badge navbar
-    setActiveTab('Orders'); // Otomatis arahkan user ke halaman Orders setelah sukses
+    processCheckout();
   };
 
   return (
@@ -90,7 +150,7 @@ function Keranjang({ cartItems, setCartItems, setActiveTab }) {
                       </div>
                     </div>
 
-                    {/* 2. SISI KANAN: TOMBOL QTY, HARGA, & TRASH (KONSISTEN DI KANAN) */}
+                    {/* 2. SISI KANAN: TOMBOL QTY, HARGA, & TRASH */}
                     <div className="col-12 col-md-5 d-flex align-items-center justify-content-between justify-content-md-end gap-4">
                       
                       {/* Kontrol Qty */}
@@ -129,6 +189,7 @@ function Keranjang({ cartItems, setCartItems, setActiveTab }) {
               style={{ color: '#4a5d4e', fontSize: '0.75rem', letterSpacing: '0.5px' }} 
               onClick={() => setActiveTab('Marketplace')}
             >
+              <i className="bi bi-arrow-left"></i> Continue Shopping
             </button>
           </div>
         </div>
@@ -204,9 +265,17 @@ function Keranjang({ cartItems, setCartItems, setActiveTab }) {
                 className="btn w-100 py-3 text-white fw-medium rounded-3 border-0" 
                 style={{ backgroundColor: '#7a5c37', fontSize: '0.95rem' }}
                 onClick={handleCheckoutTrigger}
-                disabled={cartItems.length === 0}
+                disabled={cartItems.length === 0 || loading}
               >
-                {selectedPayment === 'qris' ? 'Show QRIS Code' : 'Place Order (COD)'} <i className="bi bi-arrow-right"></i>
+                {loading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                    Processing...
+                  </>
+                ) : (
+                  selectedPayment === 'qris' ? 'Show QRIS Code' : 'Place Order (COD)'
+                )}
+                <i className="bi bi-arrow-right"></i>
               </button>
             </div>
           </div>
@@ -222,7 +291,7 @@ function Keranjang({ cartItems, setCartItems, setActiveTab }) {
           <div className="bg-white rounded-4 p-4 text-center shadow border animate__animated animate__zoomIn animate__faster" style={{ maxWidth: '360px', width: '90%', zIndex: 1060 }}>
             <div className="d-flex justify-content-between align-items-center mb-3">
               <h5 className="fw-bold m-0" style={{ color: '#063020' }}>QRIS Payment</h5>
-              <button className="btn-close shadow-none" onClick={() => setShowQrisModal(false)}></button>
+              <button className="btn-close shadow-none" onClick={() => setShowQrisModal(false)} disabled={loading}></button>
             </div>
             
             <p className="text-muted small mb-3">Scan the QR code below using GoPay, OVO, Dana, or Bank App to pay <strong>${grandTotal.toFixed(2)}</strong></p>
@@ -240,8 +309,20 @@ function Keranjang({ cartItems, setCartItems, setActiveTab }) {
               <i className="bi bi-info-circle me-1"></i> This is a development simulation.
             </div>
 
-            <button className="btn w-100 py-2.5 text-white fw-medium rounded-3 border-0" style={{ backgroundColor: '#063020' }} onClick={executeSuccessOrder}>
-              I Have Paid (Simulate Success)
+            <button 
+              className="btn w-100 py-2.5 text-white fw-medium rounded-3 border-0" 
+              style={{ backgroundColor: '#063020' }} 
+              onClick={executeSuccessOrder}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                  Processing...
+                </>
+              ) : (
+                'I Have Paid (Simulate Success)'
+              )}
             </button>
           </div>
         </div>

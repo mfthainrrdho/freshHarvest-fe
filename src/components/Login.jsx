@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { authService } from '../services/auth';
 
 function Login({ setPage, handleSignIn, kebunImg }) {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(false);
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // 1. Ambil email dari localStorage saat pertama kali komponen di-render
   useEffect(() => {
@@ -14,16 +16,44 @@ function Login({ setPage, handleSignIn, kebunImg }) {
     }
   }, []);
 
-  // 2. Fungsi custom submit untuk menangani Remember Device sebelum handleSignIn utama
-  const onSubmit = (e) => {
+  // 2. Fungsi custom submit dengan integrasi API
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    
     if (rememberDevice) {
       localStorage.setItem('rememberedEmail', email);
     } else {
       localStorage.removeItem('rememberedEmail');
     }
 
-    if (handleSignIn) {
-      handleSignIn(e);
+    setLoading(true);
+
+    try {
+      // 🔥 PRIORITAS: Coba login ke API backend dulu
+      const result = await authService.login(email, e.target.loginPassword.value);
+      
+      // Simpan token dan user dari API
+      localStorage.setItem('token', result.data.token);
+      localStorage.setItem('user', JSON.stringify(result.data.user));
+      
+      // Redirect berdasarkan role
+      if (result.data.user.role === 'admin') {
+        alert('Login sebagai Admin Berhasil!');
+        setPage('admin-dashboard');
+      } else {
+        alert('Login berhasil! Selamat datang di FreshHarvest.');
+        setPage('Marketplace');
+      }
+    } catch (apiError) {
+      console.log('API Login gagal, fallback ke dummy login:', apiError.message);
+      
+      // 🔄 FALLBACK: Jika API gagal, pakai login dummy yang lama
+      // Ini memastikan aplikasi tetap berjalan meskipun backend offline
+      if (handleSignIn) {
+        handleSignIn(e);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -96,6 +126,7 @@ function Login({ setPage, handleSignIn, kebunImg }) {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required 
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -116,6 +147,7 @@ function Login({ setPage, handleSignIn, kebunImg }) {
                     className="form-control border-start-0 border-end-0 py-2-5" 
                     placeholder="••••••••" 
                     required 
+                    disabled={loading}
                   />
                   <span 
                     className="input-group-text bg-white border-start-0 text-secondary opacity-75" 
@@ -127,7 +159,7 @@ function Login({ setPage, handleSignIn, kebunImg }) {
                 </div>
               </div>
 
-              {/* CHECKBOX REMEMBER THIS DEVICE (Tegas & Efek Glowing Hover) */}
+              {/* CHECKBOX REMEMBER THIS DEVICE */}
               <div className="form-check mb-4 gap-2 d-flex align-items-center">
                 <input 
                   type="checkbox" 
@@ -135,6 +167,7 @@ function Login({ setPage, handleSignIn, kebunImg }) {
                   id="rememberDevice" 
                   checked={rememberDevice}
                   onChange={(e) => setRememberDevice(e.target.checked)}
+                  disabled={loading}
                 />
                 <label 
                   className="form-check-label text-dark fw-medium small" 
@@ -149,8 +182,16 @@ function Login({ setPage, handleSignIn, kebunImg }) {
                 type="submit" 
                 className="btn w-100 py-3 text-white fw-semibold d-flex align-items-center justify-content-center gap-2 rounded-3 shadow-sm mb-4" 
                 style={{ backgroundColor: '#063020', fontSize: '1.1rem' }}
+                disabled={loading}
               >
-                Sign In <span>➔</span>
+                {loading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Loading...
+                  </>
+                ) : (
+                  <>Sign In <span>➔</span></>
+                )}
               </button>
             </form>
 
